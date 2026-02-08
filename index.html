@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Odyseja Volbromska</title>
+    <style>
+      body {
+        margin: 0;
+        background: #000;
+      }
+      canvas {
+        display: block;
+        margin: 0 auto;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  </head>
+  <body>
+    <script>
+      const GAME_WIDTH = 800;
+      const GAME_HEIGHT = 600;
+      const LEVEL_LENGTH = 1600;
+
+      class SplashScene extends Phaser.Scene {
+        constructor() {
+          super({ key: "SplashScene" });
+        }
+
+        create() {
+          this.cameras.main.setBackgroundColor("#000000");
+          this.add
+            .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, "Odyseja Volbromska", {
+              fontSize: "32px",
+              color: "#ffffff",
+              fontStyle: "bold",
+            })
+            .setOrigin(0.5);
+
+          this.add
+            .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "NACIŚNIJ START ABY ROZPOCZĄĆ", {
+              fontSize: "20px",
+              color: "#ffffff",
+            })
+            .setOrigin(0.5);
+
+          this.add
+            .text(
+              GAME_WIDTH / 2,
+              GAME_HEIGHT / 2 + 80,
+              "CREDITS: [DUMMY - DO PODMIANY]",
+              {
+                fontSize: "16px",
+                color: "#cccccc",
+              }
+            )
+            .setOrigin(0.5);
+
+          const startKey = this.input.keyboard.addKey(
+            Phaser.Input.Keyboard.KeyCodes.ENTER
+          );
+          startKey.once("down", () => {
+            this.scene.start("LevelIntroScene");
+          });
+        }
+      }
+
+      class LevelIntroScene extends Phaser.Scene {
+        constructor() {
+          super({ key: "LevelIntroScene" });
+        }
+
+        create() {
+          this.cameras.main.setBackgroundColor("#000000");
+          this.add
+            .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "POZIOM 1", {
+              fontSize: "36px",
+              color: "#ffffff",
+              fontStyle: "bold",
+            })
+            .setOrigin(0.5);
+
+          this.time.delayedCall(1000, () => {
+            this.scene.start("GameScene");
+          });
+        }
+      }
+
+      class WinScene extends Phaser.Scene {
+        constructor() {
+          super({ key: "WinScene" });
+        }
+
+        create() {
+          this.cameras.main.setBackgroundColor("#000000");
+          this.add
+            .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "WIN!", {
+              fontSize: "36px",
+              color: "#ffffff",
+              fontStyle: "bold",
+            })
+            .setOrigin(0.5);
+        }
+      }
+
+      class GameScene extends Phaser.Scene {
+        constructor() {
+          super({ key: "GameScene" });
+          this.lives = 3;
+        }
+
+        preload() {
+          const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+          graphics.fillStyle(0xffffff, 1);
+          graphics.fillRect(0, 0, 1, 1);
+          graphics.generateTexture("white", 1, 1);
+          graphics.destroy();
+        }
+
+        create() {
+          this.cameras.main.setBackgroundColor("#7ec8ff");
+          this.physics.world.setBounds(0, 0, LEVEL_LENGTH, GAME_HEIGHT);
+
+          this.platforms = this.physics.add.staticGroup();
+          this.createLevel();
+
+          this.player = this.add.rectangle(100, 450, 40, 60, 0x2d4dff);
+          this.physics.add.existing(this.player);
+          this.player.body.setCollideWorldBounds(true);
+          this.player.body.setGravityY(600);
+
+          this.physics.add.collider(this.player, this.platforms);
+
+          this.cursors = this.input.keyboard.createCursorKeys();
+          this.jumpKey = this.input.keyboard.addKey(
+            Phaser.Input.Keyboard.KeyCodes.SPACE
+          );
+
+          this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+          this.cameras.main.setBounds(0, 0, LEVEL_LENGTH, GAME_HEIGHT);
+
+          this.livesText = this.add
+            .text(16, 16, `KŁODA: ${this.lives}`, {
+              fontSize: "20px",
+              color: "#ffffff",
+            })
+            .setScrollFactor(0);
+
+          this.winZone = this.add.zone(LEVEL_LENGTH - 50, GAME_HEIGHT - 150, 50, 300);
+          this.physics.add.existing(this.winZone, true);
+          this.physics.add.overlap(this.player, this.winZone, () => {
+            this.scene.start("WinScene");
+          });
+
+          this.startPosition = { x: 100, y: 450 };
+        }
+
+        createLevel() {
+          const ground = this.physics.add.staticImage(
+            LEVEL_LENGTH / 2,
+            GAME_HEIGHT - 20,
+            "white"
+          );
+          ground.setDisplaySize(LEVEL_LENGTH, 40).refreshBody();
+          this.platforms.add(ground);
+
+          let x = 300;
+          let y = 420;
+          const maxJumpHeight = 120;
+          const minGap = 180;
+          const maxGap = 260;
+
+          while (x < LEVEL_LENGTH - 200) {
+            const platform = this.physics.add.staticImage(x, y, "white");
+            platform.setDisplaySize(140, 20).refreshBody();
+            this.platforms.add(platform);
+
+            x += Phaser.Math.Between(minGap, maxGap);
+            y += Phaser.Math.Between(-maxJumpHeight, maxJumpHeight);
+            y = Phaser.Math.Clamp(y, 260, 460);
+          }
+        }
+
+        update() {
+          const body = this.player.body;
+          body.setVelocityX(0);
+
+          if (this.cursors.left.isDown) {
+            body.setVelocityX(-200);
+          } else if (this.cursors.right.isDown) {
+            body.setVelocityX(200);
+          }
+
+          if (
+            Phaser.Input.Keyboard.JustDown(this.jumpKey) &&
+            body.blocked.down
+          ) {
+            body.setVelocityY(-350);
+          }
+
+          if (this.player.y > GAME_HEIGHT + 200) {
+            this.loseLife();
+          }
+        }
+
+        loseLife() {
+          this.lives = Math.max(0, this.lives - 1);
+          this.livesText.setText(`KŁODA: ${this.lives}`);
+          this.player.body.setVelocity(0, 0);
+          this.player.setPosition(this.startPosition.x, this.startPosition.y);
+        }
+      }
+
+      const config = {
+        type: Phaser.AUTO,
+        width: GAME_WIDTH,
+        height: GAME_HEIGHT,
+        physics: {
+          default: "arcade",
+          arcade: {
+            gravity: { y: 0 },
+            debug: false,
+          },
+        },
+        scene: [SplashScene, LevelIntroScene, GameScene, WinScene],
+      };
+
+      new Phaser.Game(config);
+    </script>
+  </body>
+</html>
