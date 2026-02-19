@@ -3,229 +3,373 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Odyseja Volbromska</title>
+    <title>Volbrom POU</title>
     <style>
+      :root {
+        --bg: #f6e9d9;
+        --panel: #fffaf4;
+        --ink: #2a1a10;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
-        background: #000;
+        min-height: 100vh;
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, #fff2dd, #f4d8b7 65%, #e4be97);
+        color: var(--ink);
+        display: grid;
+        place-items: center;
+        padding: 20px;
       }
-      canvas {
-        display: block;
-        margin: 0 auto;
+
+      .app {
+        width: min(980px, 100%);
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 18px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 3px solid #1b120b;
+        border-radius: 18px;
+        box-shadow: 0 10px 0 #8c5f3c;
+      }
+
+      .pet-zone {
+        padding: 20px;
+      }
+
+      .pet-wrap {
+        position: relative;
+        height: 500px;
+        background: linear-gradient(#d5ecff 0%, #d5ecff 50%, #c4e0aa 50%, #9dcf78 100%);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .pet {
+        width: 320px;
+        height: 390px;
+        background: #e2ac73;
+        border: 4px solid #17120f;
+        border-radius: 52% 52% 42% 42% / 36% 36% 54% 54%;
+        position: absolute;
+        left: 50%;
+        bottom: 38px;
+        transform: translateX(-50%);
+        overflow: hidden;
+      }
+
+      .hair {
+        width: 100%;
+        height: 130px;
+        background: linear-gradient(90deg, #2f1d13, #4b2f21);
+        border-bottom: 4px solid #17120f;
+        border-radius: 40% 40% 50% 50% / 0 0 50% 50%;
+      }
+
+      .eyes {
+        position: absolute;
+        top: 138px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 42px;
+      }
+
+      .eye {
+        width: 64px;
+        height: 34px;
+        background: #fff;
+        border: 3px solid #13100e;
+        border-radius: 50%;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .pupil {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #161111;
+        position: absolute;
+        left: 23px;
+        top: 8px;
+        transition: transform 0.08s linear;
+      }
+
+      .mouth {
+        position: absolute;
+        bottom: 112px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 78px;
+        height: 40px;
+        border: 4px solid #1a120e;
+        border-top: none;
+        border-radius: 0 0 45px 45px;
+      }
+
+      .shirt {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 150px;
+        background: #99dfff;
+        border-top: 4px solid #13100e;
+      }
+
+      .shirt::before {
+        content: "★ ♥ ✦";
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: 28px;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .panel h1 {
+        margin: 4px 0 14px;
+        font-size: 26px;
+      }
+
+      .status {
+        margin: 0 0 14px;
+        font-size: 17px;
+        font-weight: 700;
+      }
+
+      .bar {
+        margin-bottom: 10px;
+      }
+
+      .bar label {
+        display: flex;
+        justify-content: space-between;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .meter {
+        height: 16px;
+        border: 2px solid #23170f;
+        border-radius: 999px;
+        background: #edd3b6;
+        overflow: hidden;
+      }
+
+      .fill {
+        height: 100%;
+        width: 60%;
+        background: linear-gradient(90deg, #f56f64, #8ad26b);
+        transition: width 0.25s ease;
+      }
+
+      .menu,
+      .actions {
+        margin-top: 14px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .food-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      button {
+        border: 2px solid #1f150e;
+        border-radius: 10px;
+        background: #fff;
+        font-weight: 700;
+        padding: 8px 10px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      .tiny {
+        font-size: 12px;
+        opacity: 0.8;
+        margin-top: 10px;
+      }
+
+      @media (max-width: 860px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .pet-wrap {
+          height: 420px;
+        }
+
+        .pet {
+          transform: translateX(-50%) scale(0.9);
+          transform-origin: bottom center;
+        }
       }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
   </head>
   <body>
+    <main class="app">
+      <section class="card pet-zone">
+        <div class="pet-wrap" id="petWrap">
+          <div class="pet" id="pet">
+            <div class="hair"></div>
+            <div class="eyes">
+              <div class="eye"><div class="pupil"></div></div>
+              <div class="eye"><div class="pupil"></div></div>
+            </div>
+            <div class="mouth"></div>
+            <div class="shirt"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card panel">
+        <h1>Volbrom POU 🧸</h1>
+        <p class="status" id="statusText">Nastrój: Zadowolony</p>
+
+        <div class="bar"><label>Głód <span id="hungerVal"></span></label><div class="meter"><div class="fill" id="hunger"></div></div></div>
+        <div class="bar"><label>Pęcherz <span id="bladderVal"></span></label><div class="meter"><div class="fill" id="bladder"></div></div></div>
+        <div class="bar"><label>Zabawa <span id="funVal"></span></label><div class="meter"><div class="fill" id="fun"></div></div></div>
+        <div class="bar"><label>Energia <span id="energyVal"></span></label><div class="meter"><div class="fill" id="energy"></div></div></div>
+
+        <div class="menu">
+          <strong>Menu pyszności 🍩</strong>
+          <div class="food-grid" id="foodMenu"></div>
+        </div>
+
+        <div class="actions">
+          <button id="toiletBtn">🚽 Do toalety</button>
+          <button id="playBtn">🎾 Pobaw się</button>
+          <button id="sleepBtn">😴 Drzemka</button>
+        </div>
+        <p class="tiny">Statystyki same spadają co sekundę. Dbaj o niego, żeby był szczęśliwy.</p>
+      </aside>
+    </main>
+
     <script>
-      const GAME_WIDTH = 800;
-      const GAME_HEIGHT = 600;
-      const LEVEL_LENGTH = 1600;
-
-      class SplashScene extends Phaser.Scene {
-        constructor() {
-          super({ key: "SplashScene" });
-        }
-
-        create() {
-          this.cameras.main.setBackgroundColor("#000000");
-          this.add
-            .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60, "Odyseja Volbromska", {
-              fontSize: "32px",
-              color: "#ffffff",
-              fontStyle: "bold",
-            })
-            .setOrigin(0.5);
-
-          this.add
-            .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "NACIŚNIJ START ABY ROZPOCZĄĆ", {
-              fontSize: "20px",
-              color: "#ffffff",
-            })
-            .setOrigin(0.5);
-
-          this.add
-            .text(
-              GAME_WIDTH / 2,
-              GAME_HEIGHT / 2 + 80,
-              "CREDITS: [DUMMY - DO PODMIANY]",
-              {
-                fontSize: "16px",
-                color: "#cccccc",
-              }
-            )
-            .setOrigin(0.5);
-
-          const startKey = this.input.keyboard.addKey(
-            Phaser.Input.Keyboard.KeyCodes.ENTER
-          );
-          startKey.once("down", () => {
-            this.scene.start("LevelIntroScene");
-          });
-        }
-      }
-
-      class LevelIntroScene extends Phaser.Scene {
-        constructor() {
-          super({ key: "LevelIntroScene" });
-        }
-
-        create() {
-          this.cameras.main.setBackgroundColor("#000000");
-          this.add
-            .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "POZIOM 1", {
-              fontSize: "36px",
-              color: "#ffffff",
-              fontStyle: "bold",
-            })
-            .setOrigin(0.5);
-
-          this.time.delayedCall(1000, () => {
-            this.scene.start("GameScene");
-          });
-        }
-      }
-
-      class WinScene extends Phaser.Scene {
-        constructor() {
-          super({ key: "WinScene" });
-        }
-
-        create() {
-          this.cameras.main.setBackgroundColor("#000000");
-          this.add
-            .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "WIN!", {
-              fontSize: "36px",
-              color: "#ffffff",
-              fontStyle: "bold",
-            })
-            .setOrigin(0.5);
-        }
-      }
-
-      class GameScene extends Phaser.Scene {
-        constructor() {
-          super({ key: "GameScene" });
-          this.lives = 3;
-        }
-
-        preload() {
-          const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-          graphics.fillStyle(0xffffff, 1);
-          graphics.fillRect(0, 0, 1, 1);
-          graphics.generateTexture("white", 1, 1);
-          graphics.destroy();
-        }
-
-        create() {
-          this.cameras.main.setBackgroundColor("#7ec8ff");
-          this.physics.world.setBounds(0, 0, LEVEL_LENGTH, GAME_HEIGHT);
-
-          this.platforms = this.physics.add.staticGroup();
-          this.createLevel();
-
-          this.player = this.add.rectangle(100, 450, 40, 60, 0x2d4dff);
-          this.physics.add.existing(this.player);
-          this.player.body.setCollideWorldBounds(true);
-          this.player.body.setGravityY(600);
-
-          this.physics.add.collider(this.player, this.platforms);
-
-          this.cursors = this.input.keyboard.createCursorKeys();
-          this.jumpKey = this.input.keyboard.addKey(
-            Phaser.Input.Keyboard.KeyCodes.SPACE
-          );
-
-          this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-          this.cameras.main.setBounds(0, 0, LEVEL_LENGTH, GAME_HEIGHT);
-
-          this.livesText = this.add
-            .text(16, 16, `KŁODA: ${this.lives}`, {
-              fontSize: "20px",
-              color: "#ffffff",
-            })
-            .setScrollFactor(0);
-
-          this.winZone = this.add.zone(LEVEL_LENGTH - 50, GAME_HEIGHT - 150, 50, 300);
-          this.physics.add.existing(this.winZone, true);
-          this.physics.add.overlap(this.player, this.winZone, () => {
-            this.scene.start("WinScene");
-          });
-
-          this.startPosition = { x: 100, y: 450 };
-        }
-
-        createLevel() {
-          const ground = this.physics.add.staticImage(
-            LEVEL_LENGTH / 2,
-            GAME_HEIGHT - 20,
-            "white"
-          );
-          ground.setDisplaySize(LEVEL_LENGTH, 40).refreshBody();
-          this.platforms.add(ground);
-
-          let x = 300;
-          let y = 420;
-          const maxJumpHeight = 120;
-          const minGap = 180;
-          const maxGap = 260;
-
-          while (x < LEVEL_LENGTH - 200) {
-            const platform = this.physics.add.staticImage(x, y, "white");
-            platform.setDisplaySize(140, 20).refreshBody();
-            this.platforms.add(platform);
-
-            x += Phaser.Math.Between(minGap, maxGap);
-            y += Phaser.Math.Between(-maxJumpHeight, maxJumpHeight);
-            y = Phaser.Math.Clamp(y, 260, 460);
-          }
-        }
-
-        update() {
-          const body = this.player.body;
-          body.setVelocityX(0);
-
-          if (this.cursors.left.isDown) {
-            body.setVelocityX(-200);
-          } else if (this.cursors.right.isDown) {
-            body.setVelocityX(200);
-          }
-
-          if (
-            Phaser.Input.Keyboard.JustDown(this.jumpKey) &&
-            body.blocked.down
-          ) {
-            body.setVelocityY(-350);
-          }
-
-          if (this.player.y > GAME_HEIGHT + 200) {
-            this.loseLife();
-          }
-        }
-
-        loseLife() {
-          this.lives = Math.max(0, this.lives - 1);
-          this.livesText.setText(`KŁODA: ${this.lives}`);
-          this.player.body.setVelocity(0, 0);
-          this.player.setPosition(this.startPosition.x, this.startPosition.y);
-        }
-      }
-
-      const config = {
-        type: Phaser.AUTO,
-        width: GAME_WIDTH,
-        height: GAME_HEIGHT,
-        physics: {
-          default: "arcade",
-          arcade: {
-            gravity: { y: 0 },
-            debug: false,
-          },
-        },
-        scene: [SplashScene, LevelIntroScene, GameScene, WinScene],
+      const state = {
+        hunger: 72,
+        bladder: 70,
+        fun: 65,
+        energy: 80,
       };
 
-      new Phaser.Game(config);
+      const foods = [
+        { name: "🍕 Pizza", hunger: 24, bladder: -8 },
+        { name: "🍣 Sushi", hunger: 16, bladder: -4 },
+        { name: "🍰 Torcik", hunger: 14, fun: 6 },
+        { name: "🍉 Arbuz", hunger: 10, bladder: -10, energy: 4 },
+      ];
+
+      const fillEls = {
+        hunger: document.getElementById("hunger"),
+        bladder: document.getElementById("bladder"),
+        fun: document.getElementById("fun"),
+        energy: document.getElementById("energy"),
+      };
+
+      const valEls = {
+        hunger: document.getElementById("hungerVal"),
+        bladder: document.getElementById("bladderVal"),
+        fun: document.getElementById("funVal"),
+        energy: document.getElementById("energyVal"),
+      };
+
+      const statusText = document.getElementById("statusText");
+
+      const clamp = (value) => Math.max(0, Math.min(100, value));
+
+      function updateUI() {
+        Object.keys(state).forEach((key) => {
+          const value = clamp(state[key]);
+          state[key] = value;
+          fillEls[key].style.width = `${value}%`;
+          valEls[key].textContent = `${Math.round(value)}%`;
+        });
+
+        const avg = (state.hunger + state.bladder + state.fun + state.energy) / 4;
+        let mood = "Szczęśliwy 😄";
+        if (avg < 35) mood = "Nieszczęśliwy 😵";
+        else if (avg < 55) mood = "Marudny 😐";
+
+        if (state.bladder < 20) mood = "Muszę siku! 😬";
+        if (state.hunger < 20) mood = "Jestem mega głodny 🍽️";
+        statusText.textContent = `Nastrój: ${mood}`;
+      }
+
+      function changeStats(delta) {
+        Object.entries(delta).forEach(([k, v]) => {
+          state[k] = clamp(state[k] + v);
+        });
+        updateUI();
+      }
+
+      function buildFoodMenu() {
+        const menu = document.getElementById("foodMenu");
+        foods.forEach((food) => {
+          const btn = document.createElement("button");
+          btn.textContent = food.name;
+          btn.addEventListener("click", () => {
+            changeStats({
+              hunger: food.hunger || 0,
+              bladder: food.bladder || 0,
+              fun: food.fun || 0,
+              energy: food.energy || 0,
+            });
+          });
+          menu.appendChild(btn);
+        });
+      }
+
+      document.getElementById("toiletBtn").addEventListener("click", () => {
+        changeStats({ bladder: 28, fun: -4 });
+      });
+
+      document.getElementById("playBtn").addEventListener("click", () => {
+        changeStats({ fun: 18, energy: -9, hunger: -6, bladder: -5 });
+      });
+
+      document.getElementById("sleepBtn").addEventListener("click", () => {
+        changeStats({ energy: 24, fun: -4, hunger: -5 });
+      });
+
+      setInterval(() => {
+        changeStats({ hunger: -1.8, bladder: -2.2, fun: -1.3, energy: -1.1 });
+      }, 1000);
+
+      const pupils = Array.from(document.querySelectorAll(".pupil"));
+      const eyes = Array.from(document.querySelectorAll(".eye"));
+
+      document.addEventListener("mousemove", (event) => {
+        eyes.forEach((eye, idx) => {
+          const rect = eye.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+          const distance = Math.min(8, Math.hypot(event.clientX - centerX, event.clientY - centerY) / 22);
+          const x = Math.cos(angle) * distance;
+          const y = Math.sin(angle) * distance;
+          pupils[idx].style.transform = `translate(${x}px, ${y}px)`;
+        });
+      });
+
+      buildFoodMenu();
+      updateUI();
     </script>
   </body>
 </html>
